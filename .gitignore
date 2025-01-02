@@ -1,0 +1,12 @@
+# 가상 환경 디렉토리를 무시
+venv/
+
+# .idea 폴더 무시
+.idea/
+
+# .env 파일 무시
+.env
+
+# Python 캐시 파일 무시
+*.pyc
+__pycache__/
