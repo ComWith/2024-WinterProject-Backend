@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:5.7
+    container_name: mysql-db
+    environment:
+      # .env 파일의 변수 사용
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}  # MySQL 루트 비밀번호
+      MYSQL_DATABASE: ${MYSQL_DATABASE}  # 기본으로 생성할 데이터베이스 이름
+      MYSQL_USER: ${MYSQL_USER}  # MySQL 사용자 이름
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}  # MySQL 사용자 비밀번호
+    ports:
+      - "3306:3306"
+    networks:
+      - flask-network
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+  flask:
+    build: .
+    container_name: flask-app
+    environment:
+      - MYSQL_HOST=${MYSQL_HOST}  # MySQL 서버 호스트 이름 (db 서비스 이름)
+      - MYSQL_USER=${MYSQL_USER}  # MySQL 사용자 이름
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}  # MySQL 비밀번호
+      - MYSQL_DB=${MYSQL_DATABASE}  # 사용할 MySQL 데이터베이스 이름
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+    networks:
+      - flask-network
+
+networks:
+  flask-network:
+    driver: bridge
+
+volumes:
+  mysql-data:
+    driver: local
