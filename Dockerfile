@@ -8,7 +8,7 @@ WORKDIR /app
 COPY requirements.txt .
 
 # 의존성 설치
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt # 의존성 설치시 캐시를 사용하지 않도록 설정
 
 # 애플리케이션 코드 복사
 COPY . .
