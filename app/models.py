@@ -16,7 +16,7 @@ class MusicSheet(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)  # 외래 키
     pdf_url = db.Column(db.String(255), nullable=False)
     title = db.Column(db.String(50), nullable=False)
-    composer = db.Column(db.String(20), nullable=True)
+    composer = db.Column(db.String(20), nullable=False)
     instruments = db.Column(db.String(20), nullable=False)
     stages = db.Column(db.String(20), nullable=False)
 
