@@ -18,4 +18,12 @@ def get_all_sheets(user_id):
     sheets = MusicSheet.query.filter_by(user_id=user_id).all()
 
     # 변환된 딕셔너리 리스트를 JSON 형식으로 변환후 반환.
-    return jsonify([MusicSheet.to_dict() for MusicSheet in sheets])
+    return jsonify([MusicSheet.to_dict_search_all() for MusicSheet in sheets])
+
+
+@main.route('/musicsheets/<int:sheet_id>', methods=['GET'])
+def get_music_sheet(sheet_id):
+    sheet_music = MusicSheet.query.get(sheet_id)
+    if sheet_music:
+        return jsonify(sheet_music.to_dict_search_one()), 200
+    return jsonify({"error": "Sheet music not found"}), 404
