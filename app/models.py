@@ -22,3 +22,10 @@ class MusicSheet(db.Model):
 
     # 관계 설정
     user = db.relationship('User', backref='musicsheets', lazy=True)
+
+    def to_dict(self):
+        return {
+            "instrument": self.instruments,
+            "stage": self.stages,
+            "pdf_url": self.pdf_url
+        }
