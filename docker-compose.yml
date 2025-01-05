@@ -5,10 +5,10 @@ services:
     image: mysql:5.7
     container_name: mysql-db
     environment:
-      MYSQL_ROOT_PASSWORD: passward
-      MYSQL_DATABASE: db
-      MYSQL_USER: comwith
-      MYSQL_PASSWORD: rootpassward
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     ports:
       - "3306:3306"
     networks:
@@ -20,10 +20,10 @@ services:
     build: .
     container_name: flask-app
     environment:
-      - MYSQL_HOST=db
-      - MYSQL_USER=comwith
-      - MYSQL_PASSWORD=passward
-      - MYSQL_DB=db
+      - MYSQL_HOST=${MYSQL_HOST}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DB=${MYSQL_DATABASE}
     ports:
       - "5000:5000"
     depends_on:
