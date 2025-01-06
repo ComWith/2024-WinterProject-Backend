@@ -20,16 +20,22 @@ services:
     build: .
     container_name: flask-app
     environment:
+      - FLASK_DEBUG=1  # 코드 수정 시 자동 재시작 활성화
+      - PYTHONUNBUFFERED=1  # print 출력 즉시 반영
       - MYSQL_HOST=${MYSQL_HOST}
       - MYSQL_USER=${MYSQL_USER}
       - MYSQL_PASSWORD=${MYSQL_PASSWORD}
       - MYSQL_DB=${MYSQL_DATABASE}
+      - EXTERNAL_API_KEY=${EXTERNAL_API_KEY}  # API Key 환경 변수 추가
+      - EXTERNAL_API_URL=${EXTERNAL_API_URL}  # API URL 환경 변수 추가
     ports:
       - "5000:5000"
     depends_on:
       - db
     networks:
       - flask-network
+    volumes:
+      - .:/app  # 로컬 파일을 컨테이너에 반영하여 코드 변경 시 자동 재시작
 
 networks:
   flask-network:

@@ -12,7 +12,7 @@ class User(db.Model):
 class MusicSheet(db.Model):
     __tablename__ = 'musicsheets'
 
-    sheet_id = db.Column(db.String(10), primary_key=True)  # 기본 키로 설정
+    sheet_id = db.Column(db.Integer, primary_key=True)  # 기본 키로 설정
     user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)  # 외래 키
     pdf_url = db.Column(db.String(255), nullable=False)
     title = db.Column(db.String(50), nullable=False)
