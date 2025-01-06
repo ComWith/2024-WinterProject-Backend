@@ -2,7 +2,7 @@ from flask import Flask
 from flask_migrate import Migrate
 from .models import db  # db 객체 import
 from .config import Config  # Config를 사용하여 설정값을 관리합니다.
-from .routes import main
+from .routes import api
 import pymysql
 
 # PyMySQL을 MySQLdb 대신 사용하도록 설정
@@ -20,6 +20,6 @@ def create_app():
     migrate.init_app(app, db)
 
     # Blueprint 등록
-    app.register_blueprint(main)  # Blueprint 등록
+    app.register_blueprint(api)  # Blueprint 등록
 
     return app
