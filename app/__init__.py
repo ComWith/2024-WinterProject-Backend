@@ -15,9 +15,6 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)  # Config 파일에서 설정 불러오기
 
-    # 데이터베이스 URI 설정 (mysql+pymysql://)
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://comwith:rootpassward@db/db'
-
     # db와 migrate 연결
     db.init_app(app)
     migrate.init_app(app, db)
