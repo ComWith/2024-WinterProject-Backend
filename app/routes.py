@@ -68,3 +68,18 @@ def get_music_sheet(sheet_id):
     if sheet_music:
         return jsonify(sheet_music.to_dict_search_one()), 200
     return jsonify({"error": "Sheet music not found"}), 404
+
+
+@api.route('/musicsheets/<int:sheet_id>', methods=['DELETE'])
+def delete_music_sheet(sheet_id):
+    try:
+        sheet_music = MusicSheet.query.get(sheet_id)
+        if sheet_music:
+            db.session.delete(sheet_music)
+            db.session.commit()
+            return jsonify({"messeage":"Deleted successfully"}), 200
+        return jsonify({"error": "Music sheet not found"}), 404
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": "An error occurred during deletion",
+                        "details": str(e)}), 500
