@@ -66,6 +66,22 @@ def login():
 
     return response, 200
 
+# 새 Access Token 발급
+@api.route('/refresh', methods=['POST'])
+def refresh_access_token():
+    # 클라이언트에서 Refresh Token을 받아옴
+    refresh_token = request.cookies.get('refresh_token')  # 또는 헤더로 전달
+
+    # Refresh Token 검증
+    user_id = verify_refresh_token(refresh_token)
+    if not user_id:
+        return jsonify({"error": "Invalid or expired refresh token"}), 401
+
+    # 새 Access Token 생성
+    new_access_token = access_token(user_id)
+
+    return jsonify({"access_token": new_access_token}), 200
+
 # 로그아웃
 @api.route('/logout', methods=['POST'])
 def logout():
