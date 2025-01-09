@@ -1,9 +1,13 @@
 from flask import Flask
 from flask_migrate import Migrate
-from .models import db  # db 객체 import
-from .config import Config  # Config를 사용하여 설정값을 관리합니다.
+from .models import db
+from .config import Config
 from .routes import api
 import pymysql
+from .redis import get_redis_client
+
+# Redis 클라이언트 생성
+redis_client = get_redis_client()
 
 # PyMySQL을 MySQLdb 대신 사용하도록 설정
 pymysql.install_as_MySQLdb()

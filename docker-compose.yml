@@ -26,16 +26,27 @@ services:
       - MYSQL_USER=${MYSQL_USER}
       - MYSQL_PASSWORD=${MYSQL_PASSWORD}
       - MYSQL_DB=${MYSQL_DATABASE}
+      - REDIS_HOST=redis  # Redis 서비스 이름
+      - REDIS_PORT=6379  # Redis 기본 포트
       - EXTERNAL_API_KEY=${EXTERNAL_API_KEY}  # API Key 환경 변수 추가
       - EXTERNAL_API_URL=${EXTERNAL_API_URL}  # API URL 환경 변수 추가
     ports:
       - "5000:5000"
     depends_on:
       - db
+      - redis
     networks:
       - flask-network
     volumes:
       - .:/app  # 로컬 파일을 컨테이너에 반영하여 코드 변경 시 자동 재시작
+
+  redis:
+    image: redis:alpine  # Redis 알파인 이미지 사용
+    container_name: redis
+    ports:
+      - "6379:6379"  # Redis 기본 포트 6379
+    networks:
+      - flask-network
 
 networks:
   flask-network:
