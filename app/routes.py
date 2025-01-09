@@ -1,7 +1,10 @@
 import random
-from flask import Blueprint, jsonify, request, abort
+from datetime import timedelta
+from flask import Blueprint, jsonify, request, abort, make_response
 from app.klang_api import upload_to_klang
 from app.models import db, User, MusicSheet
+from app.redis import access_token, refresh_token, verify_refresh_token, verify_access_token, delete_refresh_token
+from werkzeug.security import generate_password_hash, check_password_hash
 
 api = Blueprint('api', __name__)
 
@@ -9,8 +12,95 @@ api = Blueprint('api', __name__)
 def index():
     return "Hello, Flask!"
 
+# 회원가입
+@api.route('/signup', methods=['POST'])
+def signup():
+    data = request.get_json()
+    user_id = data.get('user_id')
+    password = data.get('password')
+    nickname = data.get('nickname')
+
+    if not user_id or not password or not nickname:
+        return jsonify({"error": "User ID, password, and nickname are required"}), 400
+
+    # 중복 확인
+    if User.query.filter_by(user_id=user_id).first() or User.query.filter_by(nickname=nickname).first():
+        return jsonify({"error": "User ID or nickname already exists"}), 400
+
+    # 비밀번호 해싱 및 사용자 저장
+    hashed_password = generate_password_hash(password)
+    new_user = User(user_id=user_id, password=hashed_password, nickname=nickname)
+    db.session.add(new_user)
+    db.session.commit()
+
+    return jsonify({"message": "User registered successfully"}), 201
+
+# 로그인
+@api.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    user_id = data.get('user_id')
+    password = data.get('password')
+
+    if not user_id or not password:
+        return jsonify({"error": "User ID and password are required"}), 400
+
+    # 사용자 인증
+    user = User.query.filter_by(user_id=user_id).first()
+    if not user or not check_password_hash(user.password, password):
+        return jsonify({"error": "Invalid credentials"}), 401
+
+    # 토큰 생성
+    access_token_value = access_token(user_id)
+    refresh_token_value = refresh_token(user_id)
+
+    # 응답에 Refresh Token을 HTTP-only 쿠키로 설정
+    response = jsonify({
+        "message": "Login successful",
+        "access_token": access_token_value
+    })
+    # refresh_token을 HTTP-only 쿠키에 저장
+    response.set_cookie('refresh_token', refresh_token_value,
+                        httponly=True, secure=True,
+                        max_age=timedelta(days=30), path='/')
+
+    return response, 200
+
+# 로그아웃
+@api.route('/logout', methods=['POST'])
+def logout():
+    data = request.get_json()
+    refresh_token_value = data.get('refresh_token')
+
+    if not refresh_token_value:
+        return jsonify({"error": "Refresh token is required"}), 400
+
+    user_id = verify_refresh_token(refresh_token_value)
+    if not user_id:
+        return jsonify({"error": "Invalid or expired token"}), 401
+
+    # Redis에서 Refresh Token 삭제
+    delete_refresh_token(user_id)
+
+    # 쿠키에서 refresh_token 삭제
+    response = jsonify({"message": "Logout successful"})
+    response.delete_cookie('refresh_token', path='/')
+
+    return response, 200
+
+# 악보 변환
 @api.route('/musicsheets/convert', methods=['POST'])
 def convert_music_sheet():
+    # 인증을 위한 액세스 토큰 검증
+    auth_header = request.headers.get('Authorization')
+    if not auth_header or not auth_header.startswith("Bearer "):
+        return jsonify({"error": "Missing or invalid authorization header"}), 401
+
+    access_token_value = auth_header.split(" ")[1]
+    user_id_from_token = verify_access_token(access_token_value)
+    if not user_id_from_token:
+        return jsonify({"error": "Invalid or expired access token"}), 401
+
     if 'file' not in request.files:
         return jsonify({"error": "No file part"}), 400
 
@@ -21,18 +111,16 @@ def convert_music_sheet():
     user_id = request.form.get('user_id')
     stage = request.form.get('stage')
 
-    # 파일이 없으면 오류 반환
     if file.filename == '':
         return jsonify({"error": "No file selected"}), 400
 
-    # Klang API 호출
     try:
         pdf_url = upload_to_klang(file, instrument, title, composer)
 
-        # 랜덤 악보 ID 생성 (1부터 1000000 사이의 랜덤 숫자)
+        # 랜덤 악보 ID 생성
         music_sheet_id = random.randint(1, 1000000)
 
-        # MusicSheet 객체 생성 후 DB에 저장
+        # DB에 MusicSheet 저장
         new_music_sheet = MusicSheet(
             sheet_id=music_sheet_id,
             title=title,
@@ -50,36 +138,65 @@ def convert_music_sheet():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@api.route('/users/<int:user_id>/musicsheets', methods=['GET'])
+# 사용자 악보 조회
+@api.route('/users/<string:user_id>/musicsheets', methods=['GET'])
 def get_all_sheets(user_id):
-    user = User.query.get(user_id)
+    # 인증을 위한 액세스 토큰 검증
+    auth_header = request.headers.get('Authorization')
+    if not auth_header or not auth_header.startswith("Bearer "):
+        return jsonify({"error": "Missing or invalid authorization header"}), 401
+
+    access_token_value = auth_header.split(" ")[1]
+    user_id_from_token = verify_access_token(access_token_value)
+    if not user_id_from_token:
+        return jsonify({"error": "Invalid or expired access token"}), 401
+
+    user = User.query.filter_by(user_id=user_id).first()
     if not user:
         abort(404, description="User not found")
 
-    # 악보 테이블에서 user_id가 일치하는 모든 값을 sheets 리스트에 담기.
     sheets = MusicSheet.query.filter_by(user_id=user_id).all()
 
-    # 변환된 딕셔너리 리스트를 JSON 형식으로 변환후 반환.
-    return jsonify([MusicSheet.to_dict_search_all() for MusicSheet in sheets])
+    return jsonify([sheet.to_dict_search_all() for sheet in sheets])
 
+# 특정 악보 조회
 @api.route('/musicsheets/<int:sheet_id>', methods=['GET'])
 def get_music_sheet(sheet_id):
+    # 인증을 위한 액세스 토큰 검증
+    auth_header = request.headers.get('Authorization')
+    if not auth_header or not auth_header.startswith("Bearer "):
+        return jsonify({"error": "Missing or invalid authorization header"}), 401
+
+    access_token_value = auth_header.split(" ")[1]
+    user_id_from_token = verify_access_token(access_token_value)
+    if not user_id_from_token:
+        return jsonify({"error": "Invalid or expired access token"}), 401
+
     sheet_music = MusicSheet.query.get(sheet_id)
     if sheet_music:
         return jsonify(sheet_music.to_dict_search_one()), 200
     return jsonify({"error": "Sheet music not found"}), 404
 
-
+# 악보 삭제
 @api.route('/musicsheets/<int:sheet_id>', methods=['DELETE'])
 def delete_music_sheet(sheet_id):
+    # 인증을 위한 액세스 토큰 검증
+    auth_header = request.headers.get('Authorization')
+    if not auth_header or not auth_header.startswith("Bearer "):
+        return jsonify({"error": "Missing or invalid authorization header"}), 401
+
+    access_token_value = auth_header.split(" ")[1]
+    user_id_from_token = verify_access_token(access_token_value)
+    if not user_id_from_token:
+        return jsonify({"error": "Invalid or expired access token"}), 401
+
     try:
         sheet_music = MusicSheet.query.get(sheet_id)
         if sheet_music:
             db.session.delete(sheet_music)
             db.session.commit()
-            return jsonify({"messeage":"Deleted successfully"}), 200
+            return jsonify({"message": "Deleted successfully"}), 200
         return jsonify({"error": "Music sheet not found"}), 404
     except Exception as e:
         db.session.rollback()
-        return jsonify({"error": "An error occurred during deletion",
-                        "details": str(e)}), 500
+        return jsonify({"error": "An error occurred during deletion", "details": str(e)}), 500
