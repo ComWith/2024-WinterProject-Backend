@@ -21,7 +21,7 @@ def upload_to_klang(file, instrument, title, composer):
             'file': (file.filename, file.stream, file.content_type)  # 실제 파일의 스트림을 전송
         }
         data = {
-            'outputs': 'pdf'  # PDF 요청 (단일 항목으로 전달)
+            'outputs': 'mxml'
         }
 
         # 요청 전 파라미터 출력 (디버깅용)
@@ -55,14 +55,14 @@ def upload_to_klang(file, instrument, title, composer):
                     response_data = response.json()
                     print(f"Response JSON: {response_data}")
 
-                    # job_id 추출 및 PDF URL 생성
+                    # job_id 추출 및 MusicXML URL 생성
                     job_id = response_data.get('job_id')
                     if not job_id:
                         raise Exception("Missing 'job_id' in response")
 
-                    pdf_url = f'{API_URL}/job/{job_id}/pdf'
-                    print(f"Generated PDF URL: {pdf_url}")
-                    return pdf_url
+                    xml_url = f'{API_URL}/job/{job_id}/xml'
+                    print(f"Generated MusicXML URL: {xml_url}")
+                    return xml_url, job_id
                 except ValueError as json_err:
                     # JSON 형식이 아닌 경우 에러 처리
                     print(f"Failed to parse JSON response: {json_err}")
