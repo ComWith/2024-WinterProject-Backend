@@ -5,6 +5,7 @@ from app.klang_api import upload_to_klang
 from app.models import db, User, MusicSheet
 from app.redis import access_token, refresh_token, verify_refresh_token, verify_access_token, delete_refresh_token
 from werkzeug.security import generate_password_hash, check_password_hash
+from app.stage import *
 
 api = Blueprint('api', __name__)
 
@@ -107,16 +108,6 @@ def logout():
 # 악보 변환
 @api.route('/musicsheets/convert', methods=['POST'])
 def convert_music_sheet():
-    # 인증을 위한 액세스 토큰 검증
-    auth_header = request.headers.get('Authorization')
-    if not auth_header or not auth_header.startswith("Bearer "):
-        return jsonify({"error": "Missing or invalid authorization header"}), 401
-
-    access_token_value = auth_header.split(" ")[1]
-    user_id_from_token = verify_access_token(access_token_value)
-    if not user_id_from_token:
-        return jsonify({"error": "Invalid or expired access token"}), 401
-
     if 'file' not in request.files:
         return jsonify({"error": "No file part"}), 400
 
@@ -127,16 +118,29 @@ def convert_music_sheet():
     user_id = request.form.get('user_id')
     stage = request.form.get('stage')
 
+    # 파일이 없으면 오류 반환
     if file.filename == '':
         return jsonify({"error": "No file selected"}), 400
 
-    try:
-        pdf_url = upload_to_klang(file, instrument, title, composer)
+    # 유효한 난이도 값인지 확인
+    valid_levels = ['easy', 'intermediate', 'hard']
+    if stage not in valid_levels:
+        return jsonify({"error": f"Invalid difficulty level: {stage}. Valid levels are {valid_levels}"}), 400
 
-        # 랜덤 악보 ID 생성
+    # Klang API 호출
+    try:
+        xml_url, job_id = upload_to_klang(file, instrument, title, composer)
+
+        # MusicXML 다운로드
+        file_path = download_xml(xml_url, job_id)
+
+        # 난이도 변환 후 pdf 다운로드
+        convert_musicxml_to_pdf( file_path, level=stage)
+
+        # 랜덤 악보 ID 생성 (1부터 1000000 사이의 랜덤 숫자)
         music_sheet_id = random.randint(1, 1000000)
 
-        # DB에 MusicSheet 저장
+        # MusicSheet 객체 생성 후 DB에 저장
         new_music_sheet = MusicSheet(
             sheet_id=music_sheet_id,
             title=title,
@@ -144,15 +148,16 @@ def convert_music_sheet():
             instruments=instrument,
             user_id=user_id,
             stages=stage,
-            pdf_url=pdf_url
+            pdf_url=xml_url
         )
 
         db.session.add(new_music_sheet)
         db.session.commit()
 
-        return jsonify({"pdf_url": pdf_url}), 200
+        return jsonify({"xml_url": xml_url}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 # 사용자 악보 조회
 @api.route('/users/<string:user_id>/musicsheets', methods=['GET'])
