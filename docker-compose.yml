@@ -17,7 +17,10 @@ services:
       - mysql-data:/var/lib/mysql
 
   flask:
-    build: .
+    build:
+      context: .  # 현재 디렉토리를 빌드 컨텍스트로 설정
+      dockerfile: Dockerfile  # Flask 이미지용 Dockerfile
+    image: flask-app-image  # flask 이미지 이름 지정
     container_name: flask-app
     environment:
       - FLASK_DEBUG=1  # 코드 수정 시 자동 재시작 활성화
@@ -47,6 +50,21 @@ services:
       - "6379:6379"  # Redis 기본 포트 6379
     networks:
       - flask-network
+
+  musescore:
+    build:
+      context: .  # 현재 디렉토리를 빌드 컨텍스트로 설정
+      dockerfile: musescore/Dockerfile  # MuseScore 이미지용 Dockerfile
+    image: musescore-app-image  # musescore 이미지 이름 지정
+    container_name: musescore-app
+    ports:
+      - "8000:8000"
+    networks:
+      - flask-network
+    environment:
+      - QT_QPA_PLATFORM=offscreen
+    restart: unless-stopped
+
 
 networks:
   flask-network:
