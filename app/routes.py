@@ -1,7 +1,7 @@
 import random
 from datetime import timedelta
 from flask import Blueprint, jsonify, request, abort, make_response
-from app.klang_api import upload_to_klang
+from app.klang_api import *
 from app.models import db, User, MusicSheet
 from app.redis import access_token, refresh_token, verify_refresh_token, verify_access_token, delete_refresh_token
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -129,18 +129,23 @@ def convert_music_sheet():
 
     # Klang API 호출
     try:
+        # XML URL과 job_id를 받아오는 함수 예시 (실제 구현에 맞게 수정)
         xml_url, job_id = upload_to_klang(file, instrument, title, composer)
 
         # MusicXML 다운로드
         file_path = download_xml(xml_url, job_id)
 
-        # 난이도 변환 후 pdf 다운로드
-        convert_musicxml_to_pdf( file_path, level=stage)
+        # 난이도 변환
+        difficulty_stream = adjust_difficulty(file_path, level=stage)
 
-        # 랜덤 악보 ID 생성 (1부터 1000000 사이의 랜덤 숫자)
-        music_sheet_id = random.randint(1, 1000000)
+        # Stream 객체를 MusicXML 파일로 저장
+        saved_file_path = save_stream_as_musicxml(difficulty_stream, "adjusted_music.xml")
+
+        # pdf 변환 및 S3 업로드
+        pdf_s3_url = convert_musicxml_to_pdf(saved_file_path)
 
         # MusicSheet 객체 생성 후 DB에 저장
+        music_sheet_id = random.randint(1, 1000000)
         new_music_sheet = MusicSheet(
             sheet_id=music_sheet_id,
             title=title,
@@ -148,16 +153,15 @@ def convert_music_sheet():
             instruments=instrument,
             user_id=user_id,
             stages=stage,
-            pdf_url=xml_url
+            pdf_url=pdf_s3_url  # S3 URL 저장
         )
 
         db.session.add(new_music_sheet)
         db.session.commit()
 
-        return jsonify({"xml_url": xml_url}), 200
+        return jsonify({"pdf_url": pdf_s3_url}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 # 사용자 악보 조회
 @api.route('/users/<string:user_id>/musicsheets', methods=['GET'])

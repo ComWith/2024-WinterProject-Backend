@@ -1,85 +1,18 @@
 import requests
 import os
-import time
-from music21 import converter, stream, note, chord, environment, tie
 from flask import jsonify
 from app.config import Config
+from app.s3 import s3_put_object, s3_connection
+from music21 import converter, stream, note, chord, tie
 
+FASTAPI_URL = Config.FASTAPI_URL
+AWS_S3_BUCKET_NAME = Config.AWS_S3_BUCKET_NAME
+AWS_ACCESS_KEY = Config.AWS_ACCESS_KEY
+s3 = s3_connection()
 
-def download_xml(xml_url, job_id):
-    # API 키 가져오기
-    API_KEY = Config.EXTERNAL_API_KEY
-
-    # 작업 상태 URL
-    status_url = f"https://api.klang.io/job/{job_id}/status"
-
-    # 헤더 구성
-    headers = {
-        "kl-api-key": API_KEY
-    }
-
-    # 작업 완료 여부 확인
-    while True:
-        status_response = requests.get(status_url, headers=headers)
-        if status_response.status_code == 200:
-            status_data = status_response.json()
-            if status_data.get('status') == 'COMPLETED':
-                break  # 작업 완료 시 루프 탈출
-            elif status_data.get('status') == 'FAILED':
-                return jsonify({"error": "Job failed!"}), 400
-            else:
-                print("작업 진행 중입니다..")
-                time.sleep(10)  # 작업이 진행 중인 경우 10초 대기
-        else:
-            return print(f"상태 확인 요청 실패: 상태 코드 {status_response.status_code}, 응답: {status_response.text}")
-
-    # 작업 완료 후 MusicXML 다운로드
-    response = requests.get(xml_url, headers=headers)
-    if response.status_code == 200:
-        file_path = f"{job_id}.xml"
-        with open(file_path, "wb") as file:
-            file.write(response.content)
-        print(f"MusicXML 파일이 성공적으로 다운로드되었습니다: {file_path}")
-        return file_path
-    else:
-        return print(f"MusicXML 파일 요청 실패: 상태 코드 {response.status_code}, 응답: {response.text}")
-
-
-def convert_musicxml_to_pdf(input_path, level):
-    # music21 환경 설정 업데이트
-    env = environment.Environment()
-    env['musescoreDirectPNGPath'] = '/usr/bin/musescore'  # MuseScore 실행 파일의 정확한 경로
-    env['musicxmlPath'] = '/usr/bin/musescore'
-
-    # musicxml 파일 로드
-    score = converter.parse(input_path)
-
-    # 난이도 조정
-    adjusted_score = adjust_difficulty(score, level)
-
-    # 파일 이름 설정
-    filename = os.path.basename(input_path)
-    root_name = os.path.splitext(filename)[0]
-    temp_xml_path = f"{root_name}.xml"
-    adjusted_xml_path = f"{root_name}_adjusted.musicxml"
-    output_pdf_path = f"{root_name}_adjusted.pdf"
-
-    # MusicXML 파일로 일시적 저장 (저장할 필요가 있다면)
-    adjusted_score.write('musicxml', fp=adjusted_xml_path)
-
-    # PDF로 변환
-    adjusted_score.write('musicxml.pdf', fp=output_pdf_path)
-
-    # 임시 파일 삭제
-    if os.path.exists(temp_xml_path):
-        os.remove(temp_xml_path)
-    if os.path.exists(adjusted_xml_path):
-        os.remove(adjusted_xml_path)
-
-    return output_pdf_path
-
-
-def adjust_difficulty(score, level):
+# 난이도 변환
+def adjust_difficulty(input_path, level):
+    score = converter.parse(input_path)  # MusicXML 파일을 `Stream` 객체로 변환
 
     if level == 'easy':
         # 기본 멜로디: 단순한 음표만 유지
@@ -106,7 +39,6 @@ def adjust_difficulty(score, level):
         for idx, n in enumerate(score.flat.notes):
             if isinstance(n, note.Note):
                 # 화음을 생성하여 각 음표에 추가
-                # 기본 음표에 대한 트라이어드 화음을 생성합니다 (예: C-E-G)
                 harmony_notes = [n.pitch, n.pitch.transpose(4), n.pitch.transpose(7)]
                 new_chord = chord.Chord(harmony_notes)
                 new_chord.lyrics.append(note.Lyric("Tr"))
@@ -129,3 +61,49 @@ def adjust_difficulty(score, level):
 
     else:
         raise ValueError("Invalid difficulty level specified.")
+
+# Stream 객체를 MusicXML 파일로 저장하는 함수 추가
+def save_stream_as_musicxml(stream_obj, file_path):
+    # 주어진 Stream 객체를 MusicXML 파일로 저장
+    stream_obj.write("musicxml", fp=file_path)
+    return file_path
+
+def convert_musicxml_to_pdf(input_path):
+    print("in")
+    # MusicXML 파일을 읽어서 FastAPI로 전송
+    with open(input_path, "rb") as file:
+        files = {"file": (os.path.basename(input_path), file, "application/xml")}
+        print("middle")
+        response = requests.post(FASTAPI_URL, files=files, timeout=10)
+        print("out")
+
+    # 요청 실패 시 에러 처리
+    if response.status_code != 200:
+        return jsonify({"error": f"Conversion failed: {response.text}"}), 500
+
+    # PDF 파일이 성공적으로 반환되었으면 저장
+    pdf_output_path = os.path.splitext(input_path)[0] + ".pdf"
+    with open(pdf_output_path, "wb") as pdf_file:
+        pdf_file.write(response.content)
+
+    print(f"PDF 파일이 성공적으로 저장되었습니다: {pdf_output_path}")
+
+    # S3로 업로드
+    try:
+        # 업로드할 파일 경로에서 파일 이름만 추출
+        pdf_file_name = os.path.basename(pdf_output_path)
+
+        # 파일 업로드 (ACL을 public-read로 설정)
+        s3.upload_file(
+            pdf_output_path,
+            AWS_S3_BUCKET_NAME,
+            pdf_file_name,
+            ExtraArgs={'ACL': 'public-read'}
+        )
+
+        # S3 URL 생성
+        pdf_s3_url = f"https://{AWS_S3_BUCKET_NAME}.s3.amazonaws.com/{pdf_file_name}"
+        return pdf_s3_url  # PDF 파일의 S3 URL 반환
+    except Exception as e:
+        print(f"Error uploading PDF to S3: {e}")
+        return jsonify({"error": "Failed to upload PDF to S3"}), 500

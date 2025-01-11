@@ -1,5 +1,6 @@
 import requests
 from app.config import Config
+import time
 
 def upload_to_klang(file, instrument, title, composer):
     print(f"Received file: {file.filename}, Instrument: {instrument}, Title: {title}, Composer: {composer}")
@@ -78,3 +79,42 @@ def upload_to_klang(file, instrument, title, composer):
     except Exception as e:
         print(f"Exception occurred: {e}")
         raise
+
+def download_xml(xml_url, job_id):
+
+    API_KEY = Config.EXTERNAL_API_KEY
+    API_URL = Config.EXTERNAL_API_URL
+
+    # 작업 상태 URL
+    status_url = f"{API_URL}/job/{job_id}/status"
+
+    # 헤더 구성
+    headers = {
+        "kl-api-key": API_KEY
+    }
+
+    # 작업 완료 여부 확인
+    while True:
+        status_response = requests.get(status_url, headers=headers)
+        if status_response.status_code == 200:
+            status_data = status_response.json()
+            if status_data.get('status') == 'COMPLETED':
+                break  # 작업 완료 시 루프 탈출
+            elif status_data.get('status') == 'FAILED':
+                return jsonify({"error": "Job failed!"}), 400
+            else:
+                print("작업 진행 중입니다..")
+                time.sleep(15)  # 작업이 진행 중인 경우 10초 대기
+        else:
+            return print(f"상태 확인 요청 실패: 상태 코드 {status_response.status_code}, 응답: {status_response.text}")
+
+    # 작업 완료 후 MusicXML 다운로드
+    response = requests.get(xml_url, headers=headers)
+    if response.status_code == 200:
+        file_path = f"{job_id}.xml"
+        with open(file_path, "wb") as file:
+            file.write(response.content)
+        print(f"MusicXML 파일이 성공적으로 다운로드되었습니다: {file_path}")
+        return file_path
+    else:
+        return print(f"MusicXML 파일 요청 실패: 상태 코드 {response.status_code}, 응답: {response.text}")
