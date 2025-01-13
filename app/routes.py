@@ -133,19 +133,17 @@ def convert_music_sheet():
         xml_url, job_id = upload_to_klang(file, instrument, title, composer)
 
         # MusicXML 다운로드
-        file_path = download_xml(xml_url, job_id)
+        file_stream = download_xml(xml_url, job_id)
 
         # 난이도 변환
-        difficulty_stream = adjust_difficulty(file_path, level=stage)
+        difficulty_stream = adjust_difficulty(file_stream, level=stage, title=title, composer=composer)
 
-        # Stream 객체를 MusicXML 파일로 저장
-        saved_file_path = save_stream_as_musicxml(difficulty_stream, "adjusted_music.xml")
-
-        # pdf 변환 및 S3 업로드
-        pdf_s3_url = convert_musicxml_to_pdf(saved_file_path)
+        # Stream 객체를 MusicXML 파일로 저장, pdf 변환 및 S3 업로드
+        pdf_s3_url = stream_to_pdf_and_upload(difficulty_stream, title=title, composer=composer)
 
         # MusicSheet 객체 생성 후 DB에 저장
         music_sheet_id = random.randint(1, 1000000)
+
         new_music_sheet = MusicSheet(
             sheet_id=music_sheet_id,
             title=title,
