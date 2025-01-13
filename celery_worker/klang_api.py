@@ -1,14 +1,9 @@
 import requests
-import logging
 import time
 from flask import jsonify
 import xml.etree.ElementTree as ET
 from celery_worker.stage import *
 from celery_worker.s3 import *
-
-# 로깅 설정
-logging.basicConfig(level=logging.DEBUG)
-
 
 @shared_task
 def upload_to_klang(file, instrument, title, composer):

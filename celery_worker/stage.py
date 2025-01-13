@@ -5,6 +5,7 @@ from app.config import Config
 from celery_worker.s3 import s3_connection
 from music21 import converter, stream, note, chord, tie
 from celery import shared_task
+import re
 
 FASTAPI_URL = Config.FASTAPI_URL
 AWS_S3_BUCKET_NAME = Config.AWS_S3_BUCKET_NAME
@@ -77,7 +78,7 @@ def adjust_difficulty(file_stream, level, title, composer):
         raise ValueError("Invalid difficulty level specified.")
 
 @shared_task
-def stream_to_pdf_and_upload(musicxml_stream, title, composer):
+def stream_to_pdf_and_upload(musicxml_stream, title, composer, sheet_id):
     # 데이터를 임시 파일로 저장
     try:
         with tempfile.NamedTemporaryFile(delete=True, suffix=".musicxml") as temp_file:
@@ -94,7 +95,7 @@ def stream_to_pdf_and_upload(musicxml_stream, title, composer):
                 # 응답으로 받은 PDF 데이터를 S3에 업로드
                 pdf_data = response.content  # PDF 데이터가 바이트 형태로 반환됨
                 pdf_stream = io.BytesIO(pdf_data)
-                file_name = f"{title}.pdf"
+                file_name = f"{sheet_id}.pdf"
 
                 s3.upload_fileobj(pdf_stream, AWS_S3_BUCKET_NAME, file_name, ExtraArgs={'ACL': 'public-read'})
 
