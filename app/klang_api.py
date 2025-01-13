@@ -1,6 +1,9 @@
 import requests
-from app.config import Config
+import io
 import time
+from flask import jsonify
+from app.config import Config
+import xml.etree.ElementTree as ET
 
 def upload_to_klang(file, instrument, title, composer):
     print(f"Received file: {file.filename}, Instrument: {instrument}, Title: {title}, Composer: {composer}")
@@ -34,9 +37,6 @@ def upload_to_klang(file, instrument, title, composer):
         API_KEY = Config.EXTERNAL_API_KEY
         API_URL = Config.EXTERNAL_API_URL
 
-        print(f"API URL: {API_URL}")
-        print(f"API Key: {API_KEY}")
-
         # 실제 요청 보내기
         try:
             response = requests.post(
@@ -47,14 +47,9 @@ def upload_to_klang(file, instrument, title, composer):
                 files=files  # 멀티파트 파일 전송
             )
 
-            # 응답 상태 코드 및 내용 출력
-            print(f"API Status Code: {response.status_code}")
-            print(f"API Response Text: {response.text}")
-
             if response.status_code == 200:
                 try:
                     response_data = response.json()
-                    print(f"Response JSON: {response_data}")
 
                     # job_id 추출 및 MusicXML URL 생성
                     job_id = response_data.get('job_id')
@@ -111,10 +106,21 @@ def download_xml(xml_url, job_id):
     # 작업 완료 후 MusicXML 다운로드
     response = requests.get(xml_url, headers=headers)
     if response.status_code == 200:
-        file_path = f"{job_id}.xml"
-        with open(file_path, "wb") as file:
-            file.write(response.content)
-        print(f"MusicXML 파일이 성공적으로 다운로드되었습니다: {file_path}")
-        return file_path
+        # 바이너리 데이터를 직접 처리하는 방법
+        try:
+            musicxml_object = io.BytesIO(response.content)
+            tree = ET.ElementTree(ET.fromstring(response.content))  # 바이너리 데이터를 XML로 파싱
+            root = tree.getroot()
+
+            # 제목과 작곡자 추출
+            title = root.find(".//movement-title").text
+            composer = root.find(".//identification//creator").text
+
+            print(f"1. Movement Title: {title}")
+            print(f"1. Composer: {composer}")
+        except Exception as e:
+            print(f"Error parsing XML: {e}")
+        # 메타데이터 설정 후 반환
+        return musicxml_object
     else:
-        return print(f"MusicXML 파일 요청 실패: 상태 코드 {response.status_code}, 응답: {response.text}")
+        raise Exception("MusicXML 파일 다운로드 실패")
