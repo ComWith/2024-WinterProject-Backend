@@ -1,10 +1,16 @@
 import requests
-import io
+import logging
 import time
 from flask import jsonify
-from app.config import Config
 import xml.etree.ElementTree as ET
+from celery_worker.stage import *
+from celery_worker.s3 import *
 
+# 로깅 설정
+logging.basicConfig(level=logging.DEBUG)
+
+
+@shared_task
 def upload_to_klang(file, instrument, title, composer):
     print(f"Received file: {file.filename}, Instrument: {instrument}, Title: {title}, Composer: {composer}")
 
@@ -75,6 +81,7 @@ def upload_to_klang(file, instrument, title, composer):
         print(f"Exception occurred: {e}")
         raise
 
+@shared_task
 def download_xml(xml_url, job_id):
 
     API_KEY = Config.EXTERNAL_API_KEY

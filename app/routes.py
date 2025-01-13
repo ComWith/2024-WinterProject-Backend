@@ -1,11 +1,11 @@
 import random
 from datetime import timedelta
-from flask import Blueprint, jsonify, request, abort, make_response
-from app.klang_api import *
+from flask import Blueprint, jsonify, request, abort
+from celery_worker.klang_api import upload_to_klang, download_xml
 from app.models import db, User, MusicSheet
 from app.redis import access_token, refresh_token, verify_refresh_token, verify_access_token, delete_refresh_token
 from werkzeug.security import generate_password_hash, check_password_hash
-from app.stage import *
+from celery_worker.stage import *
 
 api = Blueprint('api', __name__)
 
