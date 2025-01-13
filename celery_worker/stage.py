@@ -4,12 +4,14 @@ import io
 from app.config import Config
 from app.s3 import s3_connection
 from music21 import converter, stream, note, chord, tie
+from celery import shared_task
 
 FASTAPI_URL = Config.FASTAPI_URL
 AWS_S3_BUCKET_NAME = Config.AWS_S3_BUCKET_NAME
 AWS_ACCESS_KEY = Config.AWS_ACCESS_KEY
 s3 = s3_connection()
 
+@shared_task
 # 난이도 변환
 def adjust_difficulty(file_stream, level, title, composer):
     # 데이터를 임시 파일로 저장
