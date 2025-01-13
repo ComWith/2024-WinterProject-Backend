@@ -29,6 +29,8 @@ services:
       - MYSQL_USER=${MYSQL_USER}
       - MYSQL_PASSWORD=${MYSQL_PASSWORD}
       - MYSQL_DB=${MYSQL_DATABASE}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}  # celery
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
       - REDIS_HOST=redis  # Redis 서비스 이름
       - REDIS_PORT=6379  # Redis 기본 포트
       - EXTERNAL_API_KEY=${EXTERNAL_API_KEY}  # API Key 환경 변수 추가
@@ -42,6 +44,27 @@ services:
       - flask-network
     volumes:
       - .:/app  # 로컬 파일을 컨테이너에 반영하여 코드 변경 시 자동 재시작
+
+  celery_worker:
+    build: .
+    container_name: celery-worker
+    command: celery -A celery worker --loglevel=info
+    env_file:
+      - .env
+    environment:
+      - FLASK_DEBUG=1  # 코드 수정 시 자동 재시작 활성화
+      - PYTHONUNBUFFERED=1  # print 출력 즉시 반영
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}  # .env에서 읽기
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+      - REDIS_HOST=redis  # Redis 서비스 이름
+      - REDIS_PORT=6379  # Redis 기본 포트
+    volumes:
+      - .:/app
+    networks:
+      - flask-network
+    depends_on:
+      - flask
+      - redis
 
   redis:
     image: redis:alpine  # Redis 알파인 이미지 사용

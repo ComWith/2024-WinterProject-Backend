@@ -3,8 +3,8 @@ import logging
 import time
 from flask import jsonify
 import xml.etree.ElementTree as ET
-from celeryFolder.stage import *
-from app.s3 import *
+from celery_worker.stage import *
+from celery_worker.s3 import *
 
 # 로깅 설정
 logging.basicConfig(level=logging.DEBUG)

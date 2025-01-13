@@ -2,7 +2,7 @@ import requests
 import tempfile
 import io
 from app.config import Config
-from app.s3 import s3_connection
+from celery_worker.s3 import s3_connection
 from music21 import converter, stream, note, chord, tie
 from celery import shared_task
 
@@ -76,6 +76,7 @@ def adjust_difficulty(file_stream, level, title, composer):
     else:
         raise ValueError("Invalid difficulty level specified.")
 
+@shared_task
 def stream_to_pdf_and_upload(musicxml_stream, title, composer):
     # 데이터를 임시 파일로 저장
     try:
