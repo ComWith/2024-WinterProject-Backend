@@ -129,6 +129,9 @@ def convert_music_sheet():
 
     # Klang API 호출
     try:
+        # MusicSheet 객체 생성 후 DB에 저장
+        music_sheet_id = random.randint(1, 1000000)
+
         # XML URL과 job_id를 받아오는 함수 예시 (실제 구현에 맞게 수정)
         xml_url, job_id = upload_to_klang(file, instrument, title, composer)
 
@@ -139,10 +142,7 @@ def convert_music_sheet():
         difficulty_stream = adjust_difficulty(file_stream, level=stage, title=title, composer=composer)
 
         # Stream 객체를 MusicXML 파일로 저장, pdf 변환 및 S3 업로드
-        pdf_s3_url = stream_to_pdf_and_upload(difficulty_stream, title=title, composer=composer)
-
-        # MusicSheet 객체 생성 후 DB에 저장
-        music_sheet_id = random.randint(1, 1000000)
+        pdf_s3_url = stream_to_pdf_and_upload(difficulty_stream, title=title, composer=composer, sheet_id=music_sheet_id)
 
         new_music_sheet = MusicSheet(
             sheet_id=music_sheet_id,
