@@ -57,6 +57,8 @@ def login():
 
     # 응답에 Refresh Token을 HTTP-only 쿠키로 설정
     response = jsonify({
+        "user_id": user_id,
+        "nickname": user.nickname,
         "message": "Login successful",
         "access_token": access_token_value
     })
