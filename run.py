@@ -2,6 +2,7 @@ from app import create_app
 import logging
 from flask import Flask, request
 from flask_cors import CORS
+import os
 
 app = create_app()
 
