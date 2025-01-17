@@ -35,7 +35,6 @@ services:
       - REDIS_PORT=6379  # Redis 기본 포트
       - EXTERNAL_API_KEY=${EXTERNAL_API_KEY}  # API Key 환경 변수 추가
       - EXTERNAL_API_URL=${EXTERNAL_API_URL}  # API URL 환경 변수 추가
-      - FLASK_CORS_ORIGINS=http://localhost:3000  # CORS 허용 도메인 추가
     ports:
       - "5000:5000"
     depends_on:

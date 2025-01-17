@@ -8,8 +8,9 @@ app = create_app()
 # 로깅 설정
 logging.basicConfig(filename='flask.log', level=logging.INFO)
 
-# CORS 설정 (모든 출처 허용)
-CORS(app, resources={r"/*": {"origins": "*"}})
+# CORS 설정 (모든 API에 적용)
+CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}}, supports_credentials=True)
+
 
 @app.before_request
 def log_request_info():
@@ -23,7 +24,7 @@ def after_request(response):
         app.logger.info(f"CORS Preflight OPTIONS request received from {request.origin}")
 
     # CORS 헤더 추가
-    response.headers.add('Access-Control-Allow-Origin', '*')  # 모든 출처 허용
+    response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
     response.headers.add('Access-Control-Allow-Credentials', 'true')  # 쿠키나 자격증명을 허용
 
     return response
