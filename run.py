@@ -9,16 +9,24 @@ app = create_app()
 logging.basicConfig(filename='flask.log', level=logging.INFO)
 
 # CORS 설정
-CORS(app, resources={r"/*": {"origins": "*"}})
+CORS(app, resources={r"/*": {"origins": os.environ.get('FLASK_CORS_ORIGINS', 'http://localhost:3000')}})
+
 
 @app.before_request
 def log_request_info():
     app.logger.info(f"Request made to {request.url} with method {request.method}")
 
+
 @app.after_request
 def after_request(response):
+    # CORS 설정
     if request.method == "OPTIONS":
         app.logger.info(f"CORS Preflight OPTIONS request received from {request.origin}")
+
+    # CORS 헤더 추가
+    response.headers.add('Access-Control-Allow-Origin', os.environ.get('FLASK_CORS_ORIGINS', 'http://localhost:3000'))
+    response.headers.add('Access-Control-Allow-Credentials', 'true')  # 쿠키나 자격증명을 허용
+
     return response
 
 if __name__ == '__main__':
