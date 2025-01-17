@@ -13,7 +13,8 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 
 @app.before_request
 def log_request_info():
-    app.logger.info(f"Request made to {request.url} with method {request.method}")
+    client_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+    app.logger.info(f"Request made from IP: {client_ip} to {request.url} with method {request.method}")
 
 @app.after_request
 def after_request(response):
