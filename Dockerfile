@@ -1,5 +1,8 @@
 FROM python:3.8
 
+# 시스템 패키지 업데이트 및 netcat 설치
+RUN apt-get update && apt-get install -y netcat-openbsd
+
 # Flask 앱 환경 구성
 WORKDIR /app
 
