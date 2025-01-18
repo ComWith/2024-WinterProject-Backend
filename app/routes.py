@@ -11,7 +11,7 @@ from flask_cors import CORS
 api = Blueprint('api', __name__)
 
 # CORS 설정 (모든 API에 적용)
-CORS(api, resources={r"api/*": {"origins": "http://localhost:3000"}}, supports_credentials=True)
+CORS(api, resources={r"/*": {"origins": "http://localhost:3000"}}, supports_credentials=True)
 
 @api.route('/')
 def index():
