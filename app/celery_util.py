@@ -1,12 +1,13 @@
 from celery import Celery
-from app.config import Config
+
+celery = Celery(__name__)
 
 def make_celery(app):
 
     celery = Celery(
         app.import_name,
-        backend=Config.CELERY_RESULT_BACKEND,
-        broker=Config.CELERY_BROKER_URL
+        backend=app.config['CELERY_RESULT_BACKEND'],
+        broker=app.config['CELERY_BROKER_URL']
     )
     celery.conf.update(app.config)
 
@@ -20,5 +21,7 @@ def make_celery(app):
                 return super().__call__(*args, **kwargs)
 
     celery.Task = ContextTask
-    return celery
 
+    celery.autodiscover_tasks(['tasks.klang_api',
+                               'tasks.stage',
+                               'tasks.s3'])

@@ -11,6 +11,8 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     ports:
       - "3306:3306"
+    env_file:
+      - .env
     networks:
       - flask-network
     volumes:
@@ -37,6 +39,8 @@ services:
       - EXTERNAL_API_URL=${EXTERNAL_API_URL}  # API URL 환경 변수 추가
     ports:
       - "5000:5000"
+    env_file:
+      - .env
     depends_on:
       - db
       - redis
@@ -44,6 +48,7 @@ services:
       - flask-network
     volumes:
       - .:/app  # 로컬 파일을 컨테이너에 반영하여 코드 변경 시 자동 재시작
+      - ./shared:/shared  # 동일한 디렉터리 공유
     command: >
       sh -c "echo 'Waiting for MySQL...'; until nc -z $MYSQL_HOST 3306; do echo 'Waiting for MySQL...'; sleep 1; done; 
              flask db init || true; flask db migrate -m 'Auto migration' || true; flask db upgrade || true;
@@ -52,9 +57,7 @@ services:
   celery_worker:
     build: .
     container_name: celery-worker
-    command: celery -A celery worker --loglevel=info
-    env_file:
-      - .env
+    command: celery -A app.celery_util worker --loglevel=info
     environment:
       - FLASK_DEBUG=1  # 코드 수정 시 자동 재시작 활성화
       - PYTHONUNBUFFERED=1  # print 출력 즉시 반영
@@ -62,10 +65,17 @@ services:
       - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
       - REDIS_HOST=redis  # Redis 서비스 이름
       - REDIS_PORT=6379  # Redis 기본 포트
+      - MYSQL_HOST=${MYSQL_HOST}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DB=${MYSQL_DATABASE}
     volumes:
       - .:/app
+      - ./shared:/shared  # 동일한 디렉터리 공유
     networks:
       - flask-network
+    env_file:
+      - .env
     depends_on:
       - flask
       - redis
