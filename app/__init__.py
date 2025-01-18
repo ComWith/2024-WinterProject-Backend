@@ -6,6 +6,7 @@ from .routes import api
 import pymysql
 from .redis import get_redis_client
 from celery_worker import make_celery
+import logging
 
 # Redis 클라이언트 생성
 redis_client = get_redis_client()
@@ -30,5 +31,9 @@ def create_app():
 
     # Blueprint 등록
     app.register_blueprint(api)  # Blueprint 등록
+
+    # 앱 로거 설정 (애플리케이션 로거)
+    app.logger.setLevel(logging.DEBUG)
+    logging.basicConfig(level=logging.DEBUG)  # DEBUG 레벨로 로그 출력
 
     return app
