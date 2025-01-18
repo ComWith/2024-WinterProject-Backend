@@ -6,8 +6,6 @@ from .routes import api
 import pymysql
 from .redis import get_redis_client
 from celery_worker import make_celery
-from flask_cors import CORS
-import logging
 
 # Redis 클라이언트 생성
 redis_client = get_redis_client()
@@ -20,13 +18,6 @@ migrate = Migrate()
 
 def create_app():
     app = Flask(__name__)
-
-    # CORS 설정 (모든 API에 적용)
-    CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}}, supports_credentials=True)
-
-    # 콘솔에 로그 출력
-    logging.basicConfig(level=logging.DEBUG)  # DEBUG 레벨로 로그 출력
-    app.logger.setLevel(logging.DEBUG)  # Flask의 기본 logger도 DEBUG로 설정
 
     app.config.from_object(Config)  # Config 파일에서 설정 불러오기
 
