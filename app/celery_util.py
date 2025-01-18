@@ -24,4 +24,5 @@ def make_celery(app):
 
     celery.autodiscover_tasks(['tasks.klang_api',
                                'tasks.stage',
-                               'tasks.s3'])
+                               'tasks.s3',
+                               'tasks.cleanup'])

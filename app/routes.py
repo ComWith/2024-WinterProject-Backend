@@ -7,6 +7,7 @@ from app.redis import access_token, refresh_token, verify_refresh_token, verify_
 from werkzeug.security import generate_password_hash, check_password_hash
 from tasks.stage import *
 from tasks.mysql import save_to_database
+from tasks.cleanup import cleanup_file
 from flask_cors import CORS
 
 api = Blueprint('api', __name__)
@@ -139,9 +140,18 @@ def convert_music_sheet():
 
     shared_dir = "/shared"  # 공유 디렉터리 경로
 
-    with open(f"{shared_dir}/{file.filename}", "wb") as temp_file:
-        file.save(temp_file.name)
-        file_path = temp_file.name
+    # 기존 파일 이름과 확장자 분리
+    file_name, file_ext = os.path.splitext(file.filename)
+
+    # 고유한 파일 이름 생성
+    unique_file_name = f"{file_name}_{music_sheet_id}{file_ext}"
+
+    # 파일 경로 생성
+    file_path = os.path.join(shared_dir, unique_file_name)
+
+    # 파일 저장
+    os.makedirs(shared_dir, exist_ok=True)  # 디렉터리 생성
+    file.save(file_path)
 
     try:
         # Celery 체인 정의
@@ -158,6 +168,7 @@ def convert_music_sheet():
                 user_id=user_id,
                 stage=stage
             )
+            | cleanup_file.si(shared_dir, unique_file_name)  # 5단계: 공유 디렉터리 정리
         )
 
         # 체인 실행

@@ -1,8 +1,10 @@
+import requests
+import os
 import time
+import tempfile
 from flask import jsonify
 import xml.etree.ElementTree as ET
-from tasks.stage import *
-from tasks.s3 import *
+from app.config import Config
 from app.celery_util import celery
 
 @celery.task
