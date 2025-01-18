@@ -1,13 +1,13 @@
 import boto3
 from app.config import Config
-from celery import shared_task
+from app.celery_util import celery
 
 AWS_ACCESS_KEY = Config.AWS_ACCESS_KEY
 AWS_SECRET_ACCESS_KEY = Config.AWS_SECRET_ACCESS_KEY
 AWS_S3_BUCKET_REGION = Config.AWS_S3_BUCKET_REGION
 AWS_S3_BUCKET_NAME = Config.AWS_S3_BUCKET_NAME
 
-@shared_task
+@celery.task
 # s3 bucket에 연결
 def s3_connection():
     try:
@@ -24,7 +24,7 @@ def s3_connection():
         print("s3 bucket connected!")
         return s3 # s3에 연결된 객체 반환
 
-@shared_task
+@celery.task
 # s3 bucket에 지정 파일 업로드
 def s3_put_object(s3, bucket, filepath, access_key):
     try:
@@ -35,7 +35,7 @@ def s3_put_object(s3, bucket, filepath, access_key):
         return False
     return True
 
-@shared_task
+@celery.task
 # s3 bucket에서 지정 파일 다운로드
 def s3_get_object(s3, bucket, object_name, file_name):
     try:

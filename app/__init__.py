@@ -5,7 +5,7 @@ from .config import Config
 from .routes import api
 import pymysql
 from .redis import get_redis_client
-from celery_worker import make_celery
+from .celery_util import make_celery
 import logging
 
 # Redis 클라이언트 생성
@@ -27,7 +27,7 @@ def create_app():
     migrate.init_app(app, db)
 
     # celery와 flask 연동
-    celery = make_celery(app)
+    make_celery(app)
 
     # Blueprint 등록
     app.register_blueprint(api)  # Blueprint 등록

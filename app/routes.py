@@ -1,11 +1,13 @@
 import random
 from datetime import timedelta
 from flask import Blueprint, jsonify, request, abort
-from celery_worker.klang_api import upload_to_klang, download_xml
+from tasks.klang_api import upload_to_klang, download_xml
 from app.models import db, User, MusicSheet
 from app.redis import access_token, refresh_token, verify_refresh_token, verify_access_token, delete_refresh_token
 from werkzeug.security import generate_password_hash, check_password_hash
-from celery_worker.stage import *
+from tasks.stage import *
+from tasks.mysql import save_to_database
+from tasks.cleanup import cleanup_file
 from flask_cors import CORS
 
 api = Blueprint('api', __name__)
@@ -133,37 +135,51 @@ def convert_music_sheet():
     if stage not in valid_levels:
         return jsonify({"error": f"Invalid difficulty level: {stage}. Valid levels are {valid_levels}"}), 400
 
-    # Klang API 호출
+    # MusicSheet ID 생성
+    music_sheet_id = random.randint(1, 1000000)
+
+    shared_dir = "/shared"  # 공유 디렉터리 경로
+
+    # 기존 파일 이름과 확장자 분리
+    file_name, file_ext = os.path.splitext(file.filename)
+
+    # 고유한 파일 이름 생성
+    unique_file_name = f"{file_name}_{music_sheet_id}{file_ext}"
+
+    # 파일 경로 생성
+    file_path = os.path.join(shared_dir, unique_file_name)
+
+    # 파일 저장
+    os.makedirs(shared_dir, exist_ok=True)  # 디렉터리 생성
+    file.save(file_path)
+
     try:
-        # MusicSheet 객체 생성 후 DB에 저장
-        music_sheet_id = random.randint(1, 1000000)
-
-        # XML URL과 job_id를 받아오는 함수 예시 (실제 구현에 맞게 수정)
-        xml_url, job_id = upload_to_klang(file, instrument, title, composer)
-
-        # MusicXML 다운로드
-        file_stream = download_xml(xml_url, job_id)
-
-        # 난이도 변환
-        difficulty_stream = adjust_difficulty(file_stream, level=stage, title=title, composer=composer)
-
-        # Stream 객체를 MusicXML 파일로 저장, pdf 변환 및 S3 업로드
-        pdf_s3_url = stream_to_pdf_and_upload(difficulty_stream, title=title, composer=composer, sheet_id=music_sheet_id)
-
-        new_music_sheet = MusicSheet(
-            sheet_id=music_sheet_id,
-            title=title,
-            composer=composer,
-            instruments=instrument,
-            user_id=user_id,
-            stages=stage,
-            pdf_url=pdf_s3_url  # S3 URL 저장
+        # Celery 체인 정의
+        task_chain = (
+            upload_to_klang.s(file_path, instrument, title, composer)  # 1단계: Klang 업로드
+            | download_xml.s()  # 2단계: XML 다운로드
+            | adjust_difficulty.s(level=stage, title=title, composer=composer)  # 3단계: 난이도 변환
+            | stream_to_pdf_and_upload.s(title=title, composer=composer, sheet_id=music_sheet_id) # 4단계: PDF 변환 및 업로드
+            | save_to_database.s(  # MySQL에 저장
+                sheet_id=music_sheet_id,
+                title=title,
+                composer=composer,
+                instrument=instrument,
+                user_id=user_id,
+                stage=stage
+            )
+            | cleanup_file.si(shared_dir, unique_file_name)  # 5단계: 공유 디렉터리 정리
         )
 
-        db.session.add(new_music_sheet)
-        db.session.commit()
+        # 체인 실행
+        task_result = task_chain.apply_async()
 
-        return jsonify({"pdf_url": pdf_s3_url}), 200
+        # 태스크 ID 반환
+        return jsonify({
+            "message": "Processing started",
+            "task_id": task_result.id
+        }), 202
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
