@@ -7,16 +7,11 @@ from app.redis import access_token, refresh_token, verify_refresh_token, verify_
 from werkzeug.security import generate_password_hash, check_password_hash
 from celery_worker.stage import *
 from flask_cors import CORS
-import logging
 
 api = Blueprint('api', __name__)
 
 # CORS 설정 (모든 API에 적용)
 CORS(api, resources={r"api/*": {"origins": "http://localhost:3000"}}, supports_credentials=True)
-
-# 콘솔에 로그 출력
-logging.basicConfig(level=logging.DEBUG)  # DEBUG 레벨로 로그 출력
-api.logger.setLevel(logging.DEBUG)  # Flask의 기본 logger도 DEBUG로 설정
 
 @api.route('/')
 def index():
