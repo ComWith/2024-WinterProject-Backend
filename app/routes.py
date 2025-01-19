@@ -70,7 +70,7 @@ def login():
     })
     # refresh_token을 HTTP-only 쿠키에 저장
     response.set_cookie('refresh_token', refresh_token_value,
-                        httponly=True, secure=False,  # HTTP에서는 secure=False
+                        httponly=True, secure=False, samesite='None',  # HTTP에서는 secure=False
                         max_age=timedelta(days=30), path='/')
 
     return response, 200
