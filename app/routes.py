@@ -9,6 +9,7 @@ from tasks.stage import *
 from tasks.mysql import save_to_database
 from tasks.cleanup import cleanup_file
 from flask_cors import CORS
+import os
 
 api = Blueprint('api', __name__)
 
@@ -69,9 +70,8 @@ def login():
         "access_token": access_token_value
     })
     # refresh_token을 HTTP-only 쿠키에 저장
-    response.set_cookie('refresh_token', refresh_token_value,
-                        httponly=True, secure=False, samesite='None',  # HTTP에서는 secure=False
-                        max_age=timedelta(days=30), path='/')
+    response.set_cookie('refresh_token', refresh_token, samesite='None', secure=False, domain='52.78.134.101', path='/',
+                        httponly=True)
 
     return response, 200
 
@@ -118,6 +118,16 @@ def logout():
 # 악보 변환
 @api.route('/musicsheets/convert', methods=['POST'])
 def convert_music_sheet():
+    # 인증을 위한 액세스 토큰 검증
+    auth_header = request.headers.get('Authorization')
+    if not auth_header or not auth_header.startswith("Bearer "):
+        return jsonify({"error": "Missing or invalid authorization header"}), 401
+
+    access_token_value = auth_header.split(" ")[1]
+    user_id_from_token = verify_access_token(access_token_value)
+    if not user_id_from_token:
+        return jsonify({"error": "Invalid or expired access token"}), 401
+
     if 'file' not in request.files:
         return jsonify({"error": "No file part"}), 400
 
