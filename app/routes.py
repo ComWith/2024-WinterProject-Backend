@@ -70,7 +70,7 @@ def login():
         "access_token": access_token_value
     })
     # refresh_token을 HTTP-only 쿠키에 저장
-    response.set_cookie('refresh_token', refresh_token, samesite='None', secure=False, domain='52.78.134.101', path='/',
+    response.set_cookie('refresh_token', refresh_token_value, samesite='None', secure=False, domain='52.78.134.101', path='/',
                         httponly=True)
 
     return response, 200
