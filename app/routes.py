@@ -14,7 +14,7 @@ import os
 api = Blueprint('api', __name__)
 
 # CORS 설정 (모든 API에 적용)
-CORS(api, resources={r"/*": {"origins": "http://localhost:3000"}}, supports_credentials=True)
+CORS(api, resources={r"/*": {"origins": ["http://localhost:3000", "http://52.78.134.101:5000"]}}, supports_credentials=True)
 
 @api.route('/')
 def index():
@@ -74,11 +74,10 @@ def login():
     response.set_cookie(
         'refresh_token',
         refresh_token_value,
-        samesite='None',  # CORS 허용 시
-        secure=True,  # 프로덕션 환경에서 HTTPS를 사용하는 경우
+        samesite='Strict',
+        secure=False,  # HTTPS가 아닌 경우 False
         httponly=True,
         path='/',
-        max_age=60 * 60 * 24 * 30  # 30일 후 만료
     )
 
     return response, 200
