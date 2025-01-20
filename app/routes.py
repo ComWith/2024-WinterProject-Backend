@@ -83,7 +83,7 @@ def login():
     return response, 200
 
 # 새 Access Token 발급
-@api.route('/refresh', methods=['POST'])
+@api.route('/refresh', methods=['GET'])
 def refresh_access_token():
     # 클라이언트에서 Refresh Token을 받아옴
     get_refresh_token = request.cookies.get('refresh_token')
