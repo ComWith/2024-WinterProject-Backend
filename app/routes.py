@@ -74,16 +74,17 @@ def login():
     response.set_cookie(
         'refresh_token',
         refresh_token_value,
-        samesite='Lax',  # HTTP 환경에서 안전한 요청에는 쿠키 전송
-        secure=False,  # HTTPS가 아닌 경우 False
+        samesite='None',  # CORS 허용 시
+        secure=True,  # 프로덕션 환경에서 HTTPS를 사용하는 경우
         httponly=True,
         path='/',
+        max_age=60 * 60 * 24 * 30  # 30일 후 만료
     )
 
     return response, 200
 
 # 새 Access Token 발급
-@api.route('/refresh', methods=['GET'])
+@api.route('/refresh', methods=['POST'])
 def refresh_access_token():
     # 클라이언트에서 Refresh Token을 받아옴
     get_refresh_token = request.cookies.get('refresh_token')
