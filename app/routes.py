@@ -69,9 +69,16 @@ def login():
         "message": "Login successful",
         "access_token": access_token_value
     })
+
     # refresh_token을 HTTP-only 쿠키에 저장
-    response.set_cookie('refresh_token', refresh_token_value, samesite='None', secure=False, domain='52.78.134.101', path='/',
-                        httponly=True)
+    response.set_cookie(
+        'refresh_token',
+        refresh_token_value,
+        samesite='Lax',  # HTTP 환경에서 안전한 요청에는 쿠키 전송
+        secure=False,  # HTTPS가 아닌 경우 False
+        httponly=True,
+        path='/',
+    )
 
     return response, 200
 
@@ -96,8 +103,7 @@ def refresh_access_token():
 # 로그아웃
 @api.route('/logout', methods=['POST'])
 def logout():
-    data = request.get_json()
-    refresh_token_value = data.get('refresh_token')
+    refresh_token_value = request.cookies.get('refresh_token')
 
     if not refresh_token_value:
         return jsonify({"error": "Refresh token is required"}), 400
