@@ -83,8 +83,8 @@ def login():
         refresh_token_value,
         samesite='Lax',  # 기본적으로 Lax 사용
         secure=secure_cookie,  # secure 값 설정
-        httponly=True,
         path='/',
+        httponly=True
     )
     print(f"Set cookies: {response.headers.get('Set-Cookie')}")  # 쿠키 설정 로그 추가
 
