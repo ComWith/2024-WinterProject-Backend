@@ -14,7 +14,7 @@ import os
 api = Blueprint('api', __name__)
 
 # CORS 설정 (모든 API에 적용)
-CORS(api, resources={r"/*": {"origins": ["http://localhost:3000", "http://52.78.134.101:5000"]}}, supports_credentials=True)
+CORS(api, resources={r"/*": {"origins": ["http://localhost:3000"]}}, supports_credentials=True)
 
 @api.route('/')
 def index():
@@ -79,6 +79,12 @@ def login():
         httponly=True,
         path='/',
     )
+
+    # 강제로 Set-Cookie 헤더 추가
+    response.headers['Set-Cookie'] = f"refresh_token={refresh_token_value}; HttpOnly; Path=/; Secure=False; SameSite=Lax"
+    # CORS 헤더 추가
+    response.headers['Access-Control-Allow-Origin'] = 'http://localhost:3000'  # 클라이언트 도메인
+    response.headers['Access-Control-Allow-Credentials'] = 'true'  # 크로스 도메인에서 쿠키 전송 허용
 
     return response, 200
 
