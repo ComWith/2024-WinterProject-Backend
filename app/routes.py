@@ -74,8 +74,8 @@ def login():
     response.set_cookie(
         'refresh_token',
         refresh_token_value,
-        samesite='Strict',
-        secure=False,  # HTTPS가 아닌 경우 False
+        samesite='Lax',  # 기본적으로 Lax 사용
+        secure=False,  # HTTP 환경에서는 반드시 False
         httponly=True,
         path='/',
     )
