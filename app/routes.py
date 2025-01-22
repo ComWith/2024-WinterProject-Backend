@@ -62,6 +62,9 @@ def login():
     access_token_value = access_token(user_id)
     refresh_token_value = refresh_token(user_id)
 
+    print(f"Access Token: {access_token_value}")  # 로그 추가
+    print(f"Refresh Token: {refresh_token_value}")  # 로그 추가
+
     # 응답에 Refresh Token을 HTTP-only 쿠키로 설정
     response = jsonify({
         "user_id": user_id,
@@ -79,12 +82,7 @@ def login():
         httponly=True,
         path='/',
     )
-
-    # 강제로 Set-Cookie 헤더 추가
-    response.headers['Set-Cookie'] = f"refresh_token={refresh_token_value}; HttpOnly; Path=/; Secure=False; SameSite=Lax"
-    # CORS 헤더 추가
-    response.headers['Access-Control-Allow-Origin'] = 'http://localhost:3000'  # 클라이언트 도메인
-    response.headers['Access-Control-Allow-Credentials'] = 'true'  # 크로스 도메인에서 쿠키 전송 허용
+    print(f"Set cookies: {response.headers.get('Set-Cookie')}")  # 쿠키 설정 로그 추가
 
     return response, 200
 
