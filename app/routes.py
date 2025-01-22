@@ -15,7 +15,7 @@ from app.config import Config
 api = Blueprint('api', __name__)
 
 # CORS 설정 (모든 API에 적용)
-CORS(api, resources={r"/*": {"origins": ["http://localhost:3000"]}}, supports_credentials=True)
+CORS(api, resources={r"/*": {"origins": ["http://localhost:3000", "http://172.30.9.21:3000"]}}, supports_credentials=True)
 
 @api.route('/')
 def index():
