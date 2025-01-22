@@ -10,6 +10,7 @@ from tasks.mysql import save_to_database
 from tasks.cleanup import cleanup_file
 from flask_cors import CORS
 import os
+from app.config import Config
 
 api = Blueprint('api', __name__)
 
@@ -73,12 +74,15 @@ def login():
         "access_token": access_token_value
     })
 
+    # secure 값을 Config에서 로드한 SESSION_COOKIE_SECURE로 설정
+    secure_cookie = Config.SESSION_COOKIE_SECURE
+
     # refresh_token을 HTTP-only 쿠키에 저장
     response.set_cookie(
         'refresh_token',
         refresh_token_value,
         samesite='Lax',  # 기본적으로 Lax 사용
-        secure=False,  # HTTP 환경에서는 반드시 False
+        secure=secure_cookie,  # secure 값 설정
         httponly=True,
         path='/',
     )
