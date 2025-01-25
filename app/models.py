@@ -35,3 +35,20 @@ class MusicSheet(db.Model):
             "stage": self.stages,
             "pdf_url": self.pdf_url
         }
+
+class Video(db.Model):
+    __tablename__ = 'video'
+
+    video_id = db.Column(db.Integer, primary_key=True)  # 기본 키로 설정
+    sheet_id = db.Column(db.Integer, db.ForeignKey('musicsheets.sheet_id'), nullable=False)  # 외래 키
+    user_id = db.Column(db.String(80), db.ForeignKey('users.user_id'), nullable=False)  # 외래 키
+    video_path = db.Column(db.String(255), nullable=True)
+
+    # 관계 설정
+    music_sheet = db.relationship('MusicSheet', backref='videos', lazy=True)
+    user = db.relationship('User', backref='videos', lazy=True)
+
+    def to_dict_video(self):
+        return {
+            "video_path": self.video_path
+        }
