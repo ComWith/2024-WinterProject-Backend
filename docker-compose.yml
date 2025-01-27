@@ -73,7 +73,7 @@ services:
     depends_on:
       - flask
     command: |
-      until nc -z flask 5000; do
+      until curl --silent --fail flask:5000; do
         echo 'Waiting for Flask to be available...'
         sleep 2
       done
