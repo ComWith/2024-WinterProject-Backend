@@ -72,15 +72,13 @@ services:
       - flask-network
     depends_on:
       - flask
-    entrypoint: |
-      sh -c "
-        until nc -z flask 5000; do
-          echo 'Waiting for Flask to be available...'
-          sleep 2
-        done
-        echo 'Flask is available, starting nginx!'
-        nginx -g 'daemon off;'
-      "
+    command: |
+      until nc -z flask 5000; do
+        echo 'Waiting for Flask to be available...'
+        sleep 2
+      done
+      echo 'Flask is available, starting nginx!'
+      nginx -g 'daemon off;'
 
   celery_worker:
     build: .
