@@ -29,6 +29,7 @@ services:
       - flask-network
     depends_on:
       - flask
+    entrypoint: [ "./wait-for-it.sh", "flask:5000", "--", "nginx", "-g", "daemon off;" ]
 
   flask:
     build:
