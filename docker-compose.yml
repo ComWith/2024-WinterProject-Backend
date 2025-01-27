@@ -21,7 +21,7 @@ services:
   nginx:
     image: nginx:latest
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf
+      - /etc/letsencrypt/live:/etc/letsencrypt/live
     ports:
       - "80:80"
       - "443:443"
