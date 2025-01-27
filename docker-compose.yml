@@ -18,19 +18,6 @@ services:
     volumes:
       - mysql-data:/var/lib/mysql
 
-  nginx:
-    image: nginx:latest
-    volumes:
-      - /etc/letsencrypt/live:/etc/letsencrypt/live
-    ports:
-      - "80:80"
-      - "443:443"
-    networks:
-      - flask-network
-    depends_on:
-      - flask
-    entrypoint: [ "/wait-for-it.sh", "flask:5000", "--", "nginx", "-g", "daemon off;" ]
-
   flask:
     build:
       context: .  # 현재 디렉토리를 빌드 컨텍스트로 설정
@@ -73,6 +60,27 @@ services:
              flask db migrate -m 'Initial migration' || echo 'No new migrations';
              flask db upgrade || echo 'Upgrade already applied';
              flask run --host=0.0.0.0 --port=5000"
+
+  nginx:
+    image: nginx:latest
+    volumes:
+      - /etc/letsencrypt/live:/etc/letsencrypt/live
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - flask-network
+    depends_on:
+      - flask
+    entrypoint: |
+      sh -c "
+        until nc -z flask 5000; do
+          echo 'Waiting for Flask to be available...'
+          sleep 2
+        done
+        echo 'Flask is available, starting nginx!'
+        nginx -g 'daemon off;'
+      "
 
   celery_worker:
     build: .
