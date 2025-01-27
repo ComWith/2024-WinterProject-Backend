@@ -72,13 +72,7 @@ services:
       - flask-network
     depends_on:
       - flask
-    command: |
-      until curl --silent --fail flask:5000; do
-        echo 'Waiting for Flask to be available...'
-        sleep 2
-      done
-      echo 'Flask is available, starting nginx!'
-      nginx -g 'daemon off;'
+    entrypoint: "nginx -g 'daemon off;'"
 
   celery_worker:
     build: .
