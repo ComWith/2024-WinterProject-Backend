@@ -63,8 +63,12 @@ services:
 
   nginx:
     image: nginx:latest
+    container_name: nginx
     volumes:
-      - /etc/letsencrypt/live:/etc/letsencrypt/live
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro  # Nginx 설정 파일을 로컬에서 가져옵니다.
+      - ./nginx/certs:/etc/letsencrypt/live/smini.site  # 인증서 파일을 Nginx 컨테이너에 마운트합니다.
+      - ./certbot/certbot/conf:/etc/letsencrypt  # Certbot 설정을 공유하는 볼륨 (추후 Certbot 사용 시)
+      - ./certbot/certbot/www:/var/www/certbot  # Certbot challenge 파일을 저장할 경로
     ports:
       - "80:80"
       - "443:443"
@@ -72,7 +76,6 @@ services:
       - flask-network
     depends_on:
       - flask
-    entrypoint: "nginx -g 'daemon off;'"
 
   celery_worker:
     build: .
@@ -111,7 +114,7 @@ services:
   musescore:
     build:
       context: .  # 현재 디렉토리를 빌드 컨텍스트로 설정
-      dockerfile: musescore/Dockerfile  # MuseScore 이미지용 Dockerfile
+      dockerfile: musescore/Dockerfile  # MuseScore 이미지용
     image: musescore-app-image  # musescore 이미지 이름 지정
     container_name: musescore-app
     ports:
