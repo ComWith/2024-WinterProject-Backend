@@ -62,19 +62,28 @@ services:
              flask run --host=0.0.0.0 --port=5000"
 
   nginx:
-    image: nginx:latest
+    build: ./nginx
     container_name: nginx
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/certs:/etc/letsencrypt/live/smini.site
-      - ./certbot/certbot/conf:/etc/letsencrypt
-      - ./certbot/certbot/www:/var/www/certbot
+      - ./nginx/nginx.http.conf:/etc/nginx/nginx.conf:ro  # 초기 HTTP 설정
+      - ./certbot/certbot/conf:/etc/letsencrypt  # SSL 인증서 저장 경로
+      - ./certbot/certbot/www:/var/www/certbot  # Certbot 인증용 폴더
     ports:
       - "80:80"
     networks:
       - flask-network
     depends_on:
       - flask
+
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - ./certbot/certbot/conf:/etc/letsencrypt
+      - ./certbot/certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do sleep 6h & wait $${!}; certbot renew; done'"
+    networks:
+      - flask-network
 
   celery_worker:
     build: .
