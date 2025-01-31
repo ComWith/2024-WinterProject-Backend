@@ -62,11 +62,11 @@ services:
              flask run --host=0.0.0.0 --port=5000"
 
   nginx:
-    build: ./nginx
+    build: .
     dockerfile: nginx/Dockerfile
     container_name: nginx
     volumes:
-      - ./nginx/nginx.http.conf:/etc/nginx/nginx.conf:ro  # 초기 HTTP 설정
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro  # 초기 HTTP 설정
       - ./certbot/certbot/conf:/etc/letsencrypt  # SSL 인증서 저장 경로
       - ./certbot/certbot/www:/var/www/certbot  # Certbot 인증용 폴더
     ports:
