@@ -5,7 +5,7 @@ FROM nginx:latest
 RUN rm /etc/nginx/conf.d/default.conf
 
 # Nginx 설정 파일 복사 (오타 수정됨)
-COPY nginx.conf /etc/nginx/conf.d/nginx.conf
+COPY nginx/nginx.conf /etc/nginx/conf.d/nginx.conf
 
 # Certbot 인증을 위한 폴더 생성
 RUN mkdir -p /var/www/certbot
