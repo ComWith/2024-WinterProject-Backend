@@ -63,6 +63,7 @@ services:
 
   nginx:
     build: ./nginx
+    dockerfile: nginx/Dockerfile
     container_name: nginx
     volumes:
       - ./nginx/nginx.http.conf:/etc/nginx/nginx.conf:ro  # 초기 HTTP 설정
