@@ -61,20 +61,30 @@ services:
              flask run --host=0.0.0.0 --port=5000"
 
   nginx:
-    build:
-      context: .  # 현재 디렉토리
-      dockerfile: nginx/Dockerfile  # ./nginx/Dockerfile을 사용
+    build: ./nginx
     container_name: nginx
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro  # 초기 HTTP 설정
-      - ./certbot/certbot/conf:/etc/letsencrypt  # SSL 인증서 저장 경로
-      - ./certbot/certbot/www:/var/www/certbot  # Certbot 인증용 폴더
     ports:
-      - "80:80"
-    networks:
-      - flask-network
+      - 80:80
+      - 443:443
+    restart: always
+    volumes:
+      - build_folder:/var/www/frontend
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
     depends_on:
       - flask
+    command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
+
+  certbot: #certbot 컨테이너 추가
+    image: certbot/certbot
+    restart: unless-stopped
+    container_name: certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    depends_on:
+      - nginx
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
 
   celery_worker:
     build: .
