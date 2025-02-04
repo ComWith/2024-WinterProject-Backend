@@ -22,6 +22,7 @@ services:
     build:
       context: .  # 현재 디렉토리를 빌드 컨텍스트로 설정
       dockerfile: Dockerfile  # Flask 이미지용 Dockerfilex
+    container_name: flask
     image: flask-app-image  # flask 이미지 이름 지정
     environment:
       - FLASK_DEBUG=1  # 코드 수정 시 자동 재시작 활성화
