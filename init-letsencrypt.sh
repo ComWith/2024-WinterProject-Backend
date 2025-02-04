@@ -7,7 +7,7 @@ fi
 
 compose_file="docker-compose.yml"
 
-domains=("www.smini.site")
+domains=("smini.site")
 rsa_key_size=4096
 data_path="./certbot"
 email="sm020320@naver.com" # Adding a valid address is strongly recommended
