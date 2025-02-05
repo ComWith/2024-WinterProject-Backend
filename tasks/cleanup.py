@@ -1,7 +1,7 @@
 import os
-from app.celery_util import celery
+from celery import shared_task
 
-@celery.task
+@shared_task
 def cleanup_file(shared_dir, file_name):
     """특정 파일만 삭제하는 태스크"""
     try:

@@ -5,9 +5,9 @@ import tempfile
 from flask import jsonify
 import xml.etree.ElementTree as ET
 from app.config import Config
-from app.celery_util import celery
+from celery import shared_task
 
-@celery.task
+@shared_task
 def upload_to_klang(file_path, instrument, title, composer):
 
     try:
@@ -68,7 +68,7 @@ def upload_to_klang(file_path, instrument, title, composer):
         print(f"Exception occurred: {e}")
         raise
 
-@celery.task
+@shared_task
 def download_xml(task_data):
     xml_url = task_data['xml_url']
     job_id = task_data['job_id']
