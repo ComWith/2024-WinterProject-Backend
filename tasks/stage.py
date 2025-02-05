@@ -5,14 +5,14 @@ import os
 from app.config import Config
 from tasks.s3 import s3_connection
 from music21 import converter, stream, note, chord, tie
-from app.celery_util import celery
+from celery import shared_task
 
 FASTAPI_URL = Config.FASTAPI_URL
 AWS_S3_BUCKET_NAME = Config.AWS_S3_BUCKET_NAME
 AWS_ACCESS_KEY = Config.AWS_ACCESS_KEY
 s3 = s3_connection()
 
-@celery.task
+@shared_task
 # 난이도 변환
 def adjust_difficulty(file_path, level, title, composer):
     # 임시 파일 경로를 music21의 converter.parse에 전달
@@ -79,7 +79,7 @@ def adjust_difficulty(file_path, level, title, composer):
 
     return result_file_path
 
-@celery.task
+@shared_task
 def stream_to_pdf_and_upload(file_path, title, composer, sheet_id):
     # 파일 경로로부터 MusicXML 파일을 읽어 FastAPI 서버로 전송
     with open(file_path, "rb") as f:

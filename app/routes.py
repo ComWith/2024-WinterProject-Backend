@@ -8,6 +8,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from tasks.stage import *
 from tasks.mysql import save_to_database
 from tasks.cleanup import cleanup_file
+from tasks.video import save_video
 from flask_cors import CORS
 import os
 
@@ -267,3 +268,62 @@ def delete_music_sheet(sheet_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": "An error occurred during deletion", "details": str(e)}), 500
+
+# 동영상 업로드
+@api.route('/musicsheets/<int:sheet_id>', methods=['POST'])
+def upload_video(sheet_id):
+    # 인증을 위한 액세스 토큰 검증
+    auth_header = request.headers.get('Authorization')
+    if not auth_header or not auth_header.startswith("Bearer "):
+        return jsonify({"error": "Missing or invalid authorization header"}), 401
+
+    access_token_value = auth_header.split(" ")[1]
+    user_id_from_token = verify_access_token(access_token_value)
+    if not user_id_from_token:
+        return jsonify({"error": "Invalid or expired access token"}), 401
+
+    file = request.files['file']
+
+    # 파일이 없으면 오류 반환
+    if file.filename == '':
+        return jsonify({"error": "No file selected"}), 400
+
+    # MusicSheet에서 sheet_id에 해당하는 레코드를 조회하여 user_id를 얻기
+    sheet = MusicSheet.query.get(sheet_id)
+    if not sheet:
+        raise jsonify(f"No MusicSheet found with ID {sheet_id}")
+
+    user_id = sheet.user_id  # MusicSheet 모델에서 user_id 가져오기
+
+    # Video ID 생성
+    video_id = random.randint(1, 1000000)
+
+    shared_dir = "/shared"  # 공유 디렉터리 경로
+
+    # 파일 이름 생성
+    video_name = f"video_{video_id}.mp4"
+
+    # 파일 경로 생성
+    file_path = os.path.join(shared_dir, video_name)
+
+    # 파일 저장
+    os.makedirs(shared_dir, exist_ok=True)  # 디렉터리 생성
+    file.save(file_path)
+
+    try:
+        task_chain = (
+                save_video.s(file_path, video_id, user_id, sheet_id, video_name)  # 동영상 저장
+                | cleanup_file.si(shared_dir, video_name)  # 공유 디렉터리 정리
+        )
+
+        # 체인 실행
+        task_result = task_chain.apply_async()
+
+        # 태스크 ID 반환
+        return jsonify({
+            "message": "Processing started",
+            "task_id": task_result.id
+        }), 202
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
