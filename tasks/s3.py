@@ -26,7 +26,11 @@ def s3_put_object(s3, bucket, filepath, access_key):
             filepath,
             bucket,
             access_key,
-            ExtraArgs={'ACL': 'public-read', 'ContentType': 'image/jpeg'}
+            ExtraArgs={
+                'ACL': 'public-read',  # 공개 URL로 접근 가능하도록 설정
+                'ContentType': 'application/pdf',  # PDF로 인식되도록 설정
+                'ContentDisposition': 'inline'  # 브라우저에서 미리보기 활성화
+            }
         )
         print("s3 업로드 완료")
     except Exception as e:
