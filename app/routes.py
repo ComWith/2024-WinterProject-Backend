@@ -353,7 +353,7 @@ def upload_video(sheet_id):
         return jsonify({"error": str(e)}), 500
 
 # 특정 동영상 조회
-@api.route('/musicsheets/<int:video_id>', methods=['GET'])
+@api.route('/musicsheets/video/<int:video_id>', methods=['GET'])
 def get_video(video_id):
     # 인증을 위한 액세스 토큰 검증
     auth_header = request.headers.get('Authorization')
