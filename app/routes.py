@@ -346,7 +346,7 @@ def upload_video(sheet_id):
         # 태스크 ID 반환
         return jsonify({
             "message": "Processing started",
-            "task_id": task_result.id
+            "video_id": video_id
         }), 202
 
     except Exception as e:
