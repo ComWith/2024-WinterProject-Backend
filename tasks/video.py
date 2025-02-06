@@ -22,4 +22,4 @@ def save_video(file_path, video_id, user_id, sheet_id, video_name):
     # MySQL 저장
     video_to_database(video_path, video_id, user_id, sheet_id)
 
-    return f"https://{AWS_S3_BUCKET_NAME}.s3.amazonaws.com/{video_name}"
+    return {"status": "success", "video_path": video_path}
