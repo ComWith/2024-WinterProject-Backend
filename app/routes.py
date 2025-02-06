@@ -2,7 +2,7 @@ import random
 from datetime import timedelta
 from flask import Blueprint, jsonify, request, abort
 from tasks.klang_api import upload_to_klang, download_xml
-from app.models import db, User, MusicSheet
+from app.models import db, User, MusicSheet, Video
 from app.redis import access_token, refresh_token, verify_refresh_token, verify_access_token, delete_refresh_token
 from werkzeug.security import generate_password_hash, check_password_hash
 from tasks.stage import *
@@ -351,3 +351,21 @@ def upload_video(sheet_id):
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+# 특정 동영상 조회
+@api.route('/musicsheets/<int:video_id>', methods=['GET'])
+def get_video(video_id):
+    # 인증을 위한 액세스 토큰 검증
+    auth_header = request.headers.get('Authorization')
+    if not auth_header or not auth_header.startswith("Bearer "):
+        return jsonify({"error": "Missing or invalid authorization header"}), 401
+
+    access_token_value = auth_header.split(" ")[1]
+    user_id_from_token = verify_access_token(access_token_value)
+    if not user_id_from_token:
+        return jsonify({"error": "Invalid or expired access token"}), 401
+
+    find_video = Video.query.get(video_id)
+    if find_video:
+        return jsonify(find_video.to_dict_video()), 200
+    return jsonify({"error": "Sheet music not found"}), 404
