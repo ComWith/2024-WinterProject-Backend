@@ -22,4 +22,4 @@ def save_video(file_path, video_id, user_id, sheet_id, video_name):
     # MySQL 저장
     video_to_database(video_path, video_id, user_id, sheet_id)
 
-    return {"status": "success", "video_path": video_path}
+    return {"status": "success", "video_id": video_id}
