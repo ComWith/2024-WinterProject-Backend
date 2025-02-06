@@ -98,7 +98,7 @@ def stream_to_pdf_and_upload(file_path, title, composer, sheet_id):
         s3.upload_fileobj(pdf_stream, AWS_S3_BUCKET_NAME, file_name, ExtraArgs={'ACL': 'public-read', 'ContentType': 'application/pdf'})
 
         # S3 URL 반환
-        return f"https://{AWS_S3_BUCKET_NAME}.s3.amazonaws.com/{file_name}.pdf?response-content-disposition=inline"
+        return f"https://{AWS_S3_BUCKET_NAME}.s3.amazonaws.com/{file_name}?response-content-disposition=inline"
     else:
         # 에러 메시지와 함께 실패 응답 반환
         error_message = f"Failed to convert PDF with status code {response.status_code}: {response.text}"
