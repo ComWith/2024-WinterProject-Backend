@@ -95,7 +95,7 @@ def stream_to_pdf_and_upload(file_path, title, composer, sheet_id):
         pdf_stream = io.BytesIO(pdf_data)
         file_name = f"{sheet_id}.pdf"
 
-        s3.upload_fileobj(pdf_stream, AWS_S3_BUCKET_NAME, file_name, ExtraArgs={'ACL': 'public-read'})
+        s3.upload_fileobj(pdf_stream, AWS_S3_BUCKET_NAME, file_name, ExtraArgs={'ACL': 'public-read', 'ContentType': 'image/jpeg'})
 
         # S3 URL 반환
         return f"https://{AWS_S3_BUCKET_NAME}.s3.amazonaws.com/{file_name}"
