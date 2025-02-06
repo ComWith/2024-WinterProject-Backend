@@ -206,6 +206,30 @@ def convert_music_sheet():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
+# 악보 검색
+@api.route('/musicsheets/search', methods=['GET'])
+def filtering_sheet():
+    # 인증을 위한 액세스 토큰 검증
+    auth_header = request.headers.get('Authorization')
+    if not auth_header or not auth_header.startswith("Bearer "):
+        return jsonify({"error": "Missing or invalid authorization header"}), 401
+
+    access_token_value = auth_header.split(" ")[1]
+    user_id_from_token = verify_access_token(access_token_value)
+    if not user_id_from_token:
+        return jsonify({"error": "Invalid or expired access token"}), 401
+
+    title_filter = request.args.get('title')
+    if not title_filter:
+        return jsonify({"error": "악보 제목을 검색하세요."}), 400
+
+    # 악보 제목 검색(부분 일치)
+    results = MusicSheet.query.filter(MusicSheet.title.like(f'%{title_filter}%')).all()
+
+    sheets = [{"id": sheet.sheet_id, "title": sheet.title} for sheet in results]
+    return jsonify(sheets)
+
 # 사용자 악보 조회
 @api.route('/users/<string:user_id>/musicsheets', methods=['GET'])
 def get_all_sheets(user_id):
