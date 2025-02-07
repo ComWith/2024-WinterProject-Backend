@@ -15,7 +15,7 @@ import os
 api = Blueprint('api', __name__)
 
 # CORS 설정 (모든 API에 적용)
-CORS(api, resources={r"/*": {"origins": ["https://notanova.vercel.app/"]}}, supports_credentials=True)
+CORS(api, resources={r"/*": {"origins": ["https://notanova.vercel.app"]}}, supports_credentials=True)
 
 @api.route('/')
 def index():
