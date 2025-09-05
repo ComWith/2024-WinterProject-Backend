@@ -11,6 +11,12 @@
 <br/>
 
 <div align="center">
+  <img src="https://github.com/user-attachments/assets/07d90b7a-72ae-42d1-8fc6-37ae5b2ee92f" alt="Main" width="60%"/>
+</div>
+
+<br/>
+
+<div align="center">
   <h3>📍서비스 소개</h3>
   <p>
   연주하고 싶은 음악의 악보가 없어서 아쉬웠던 적이 있지 않으신가요? 
@@ -84,7 +90,7 @@
 
 <br/>
 
-## Stacks 🪄
+## Tech Stacks
 
 ### Framework
 ![Flask](https://img.shields.io/badge/flask-%23000000.svg?style=for-the-badge&logo=flask&logoColor=white)
@@ -103,50 +109,64 @@
 
 <br/>
 
-## 주요 기능 🔥
-### ⭐️ 업로드한 음악 파일을 자동으로 악보로 변환
-- AI Music Analysis API | Klangio를 이용하여 음악 파일을 원하는 악보 형식으로 변경한다.
+## ⚙️ 주요 기능
+
+### 1) 🔑 로그인 · 회원가입
+- 이메일/소셜 로그인 지원 (예정 범위 포함)
+- 첫 로그인 이후 개인화된 프로젝트/악보 관리
+
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/fd17c101-055b-4f2c-847d-5ae423f2b91d" alt="로그인/회원가입 시연" width="80%"/>
+</div>
 
 &nbsp;
 
-### ⭐️ 무슨 악기의 악보를 원하는지 선택
-- AI Music Analysis API | Klangio를 이용하여 악보로 변환할 때 사용자가 원하는 악기 선택 가능
+### 2) 📤 동영상 업로드
+- 사용자가 보유한 음악/연주 영상(mp3/wav/mp4 등) 업로드
+- 업로드 완료 후 자동 전처리 및 분석 대기
+
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/fe8ecedc-0cdd-4d08-9e21-5a0fd8c0d7fd" alt="동영상 업로드 시연" width="80%"/>
+</div>
 
 &nbsp;
 
-### ⭐️ 난이도 단계별 악보 표출
-**a. 초급**
-- 목표: 초보자도 쉽게 따라 할 수 있는 간단한 멜로디 제공
-- 기준:
-    1. 단순 멜로디: 곡의 주 멜로디만 추출. 화음(코드)나 복잡한 리듬은 생략
-    2. 기본 코드: 멜로디와 함께 간단한 코드명 표시
-    - 이유: 초급자는 화음 연주 대신 멜로디를 치는 데 집중하거나, 코드만 알아도 반주 가능
- 
-**b. 중급**
+### 3) 🧾 악보 추출 및 다운로드
+- **AI Music Analysis API** (Klangio)로 음악 분석 → 악보 자동 생성
+- PDF 미리보기/다운로드 제공, 제목·작곡가 등 메타데이터 편집
 
-- 목표: 연주자의 표현력을 높이고, 음악적 이해를 확장.
-- 기준:
-    1. 코드 추가: 멜로디와 함께 코드 진행을 악보에 포함
-    2. 리듬 추가: 원곡의 리듬감을 표현할 수 있도록 리듬 표기 추가
-    3. 장식음: 꾸밈음, 이음줄 등을 추가해 악보를 풍부하게 구성
-    - 이유: 중급자는 단순한 멜로디만 연주하기엔 지루할 수 있고, 리듬과 장식음은 더 자연스러운 연주로 이어짐
- 
-**c. 고급**
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/6da64889-8940-4015-956b-7cf2fd06cf21" alt="악보 추출 및 다운로드 시연" width="80%"/>
+</div>
 
-- 목표: 원곡에 최대한 가까운 연주를 위한 상세 정보 제공.
-- 기준:
-    1. 세부 화음: 코드뿐 아니라 화음의 세부 구성음까지 악보에 표시
-    2. 복잡한 리듬: 빠른 음표, 복합 박자, 다이내믹 마크 등을 포함
-    3. 연주 기법: 트릴, 글리산도, 스트로크, 핑거링 등 연주 기법 추가
-    - 이유: 숙련자는 곡의 원곡 느낌을 살리는 디테일한 표현에 관심이 많음
+<details>
+  <summary>세부 옵션 (난이도 · 악기) 펼치기</summary>
 
+  #### 🎚 난이도 단계별 악보
+  - **초급**: 주멜로디 중심, 간단한 코드 표기  
+  - **중급**: 코드 진행/리듬/장식음 추가  
+  - **고급**: 세부 화음/복잡 리듬/연주기법(트릴·글리산도 등) 포함
+
+  #### 🎻 악기 선택
+  - 변환 시 원하는 **악기 파트**(예: 피아노, 기타 등) 지정 가능
+</details>
+
+&nbsp;
+
+### 4) 🎬 연주 영상 업로드
+- 생성된 악보 기반의 **연주 영상 업로드** 및 웹 재생 지원
+- 악보/영상 연동으로 학습·공유에 용이
+
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/ea195e97-b6b6-474b-ad37-4da645c6adcb" alt="연주 영상 업로드 시연" width="80%"/>
+</div>
 <br/>
 
 ## 아키텍쳐
 <div align="center">
   <img src="https://github.com/user-attachments/assets/41b8c17f-134c-455e-a738-5a38f438db99" 
        alt="Main" 
-       width="700px"
+       width="70%"
        style="border-radius: 20px;"/>
 </div>
 
@@ -156,7 +176,14 @@
 <div align="center">
   <img src="https://github.com/user-attachments/assets/3e9c4f45-8d97-4a58-9882-7d2acfd0173c" 
        alt="Main" 
-       width="700px"
+       width="70%"
        style="border-radius: 20px;"/>
 </div>
 
+## 프로젝트 팀원
+
+🎯 **Team Leader** : 박병욱  
+
+🎨 **Frontend** : 김경재 · 박병욱 · 전민경  
+
+⚙️ **Backend** : 이성민 · 임재영 · 이채원  
